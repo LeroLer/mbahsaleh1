@@ -49,6 +49,7 @@
                                 <th>Kuantitas (kg)</th>
                                 <th>Harga Per Kilogram</th>
                                 <th>Total Harga</th>
+                                <th>Nama Pelanggan</th>
                                 <th>Aksi</th>
                             </tr>
                         </thead>
@@ -61,10 +62,14 @@
                                     <td>{{ $sale->quantity }}</td>
                                     <td>Rp {{ number_format($sale->product->price, 0, ',', '.') }}</td>
                                     <td>Rp {{ number_format($sale->total_price, 0, ',', '.') }}</td>
+                                    <td>{{ $sale->customer_name }}</td>
                                     <td>
                                         <div class="btn-group" role="group">
                                             <a href="{{ route('sales.edit', $sale->id) }}" class="btn btn-warning btn-sm">
                                                 <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="{{ route('sales.struk', $sale->id) }}" class="btn btn-info btn-sm" target="_blank">
+                                                <i class="fas fa-print"></i>
                                             </a>
                                             <form action="{{ route('sales.destroy', $sale->id) }}" method="POST" class="d-inline">
                                                 @csrf

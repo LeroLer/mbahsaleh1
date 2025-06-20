@@ -13,7 +13,8 @@ class Sale extends Model
         'product_id',
         'quantity',
         'total_price',
-        'sale_date'
+        'sale_date',
+        'customer_name',
     ];
 
     protected $casts = [

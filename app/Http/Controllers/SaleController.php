@@ -26,7 +26,8 @@ class SaleController extends Controller
         $request->validate([
             'product_id' => 'required|exists:products,id',
             'quantity' => 'required|numeric|min:0.01',
-            'sale_date' => 'required|date'
+            'sale_date' => 'required|date',
+            'customer_name' => 'nullable|string|max:255',
         ]);
 
         try {
@@ -39,7 +40,8 @@ class SaleController extends Controller
                 'product_id' => $request->product_id,
                 'quantity' => $request->quantity,
                 'total_price' => $total_price,
-                'sale_date' => $request->sale_date
+                'sale_date' => $request->sale_date,
+                'customer_name' => $request->customer_name,
             ]);
 
             DB::commit();
@@ -64,7 +66,8 @@ class SaleController extends Controller
         $request->validate([
             'product_id' => 'required|exists:products,id',
             'quantity' => 'required|numeric|min:0.01',
-            'sale_date' => 'required|date'
+            'sale_date' => 'required|date',
+            'customer_name' => 'nullable|string|max:255',
         ]);
 
         try {
@@ -77,7 +80,8 @@ class SaleController extends Controller
                 'product_id' => $request->product_id,
                 'quantity' => $request->quantity,
                 'total_price' => $total_price,
-                'sale_date' => $request->sale_date
+                'sale_date' => $request->sale_date,
+                'customer_name' => $request->customer_name,
             ]);
 
             DB::commit();
@@ -101,5 +105,11 @@ class SaleController extends Controller
             return redirect()->back()
                 ->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
+    }
+
+    public function printStruk($id)
+    {
+        $sale = Sale::with('product')->findOrFail($id);
+        return view('sales.struk', compact('sale'));
     }
 }

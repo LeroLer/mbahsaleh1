@@ -69,6 +69,14 @@
                         @enderror
                     </div>
 
+                    <div class="form-group">
+                        <label for="customer_name" class="font-weight-bold">Nama Pelanggan</label>
+                        <input type="text" class="form-control @error('customer_name') is-invalid @enderror" id="customer_name" name="customer_name" value="{{ old('customer_name', $sale->customer_name) }}">
+                        @error('customer_name')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+
                     <div class="d-flex justify-content-between">
                         <a href="{{ route('sales.index') }}" class="btn btn-secondary">
                             <i class="fas fa-arrow-left"></i> Kembali

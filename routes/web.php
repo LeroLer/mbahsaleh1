@@ -15,3 +15,6 @@ Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard
 
 Route::resource('products', ProductController::class);
 Route::resource('sales', SaleController::class);
+
+// Route cetak struk penjualan
+Route::get('sales/{id}/struk', [SaleController::class, 'printStruk'])->name('sales.struk');

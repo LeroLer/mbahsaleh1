@@ -27,20 +27,6 @@ class DashboardController extends Controller
         ->orderBy('date')
         ->get();
 
-        // Data penjualan per produk
-        $topProducts = Sale::select(
-            'products.name',
-            DB::raw('SUM(sales.quantity) as total_quantity'),
-            DB::raw('SUM(sales.total_price) as total_revenue')
-        )
-        ->join('products', 'products.id', '=', 'sales.product_id')
-        ->whereMonth('sale_date', $currentMonth)
-        ->whereYear('sale_date', $currentYear)
-        ->groupBy('products.id', 'products.name')
-        ->orderByDesc('total_revenue')
-        ->limit(5)
-        ->get();
-
         // Statistik bulanan
         $monthlyStats = [
             'total_sales' => Sale::whereMonth('sale_date', $currentMonth)
@@ -55,17 +41,36 @@ class DashboardController extends Controller
             'total_products' => Product::count()
         ];
 
-        // Data untuk grafik
+        // Data untuk grafik bulanan
         $chartData = [
             'labels' => $monthlySales->pluck('date'),
             'transactions' => $monthlySales->pluck('total_transactions'),
             'revenue' => $monthlySales->pluck('total_revenue')
         ];
 
+        // Data penjualan hari ini
+        $today = Carbon::now()->toDateString();
+        $dailyStats = [
+            'total_sales' => Sale::whereDate('sale_date', $today)->count(),
+            'total_revenue' => Sale::whereDate('sale_date', $today)->sum('total_price'),
+        ];
+
+        // Data grafik harian (1 bulan berjalan)
+        $daysInMonth = Carbon::now()->daysInMonth;
+        $dates = collect(range(1, $daysInMonth))->map(function ($day) use ($currentMonth, $currentYear) {
+            return Carbon::createFromDate($currentYear, $currentMonth, $day)->format('Y-m-d');
+        });
+        $dailyChartData = [
+            'labels' => $dates->map(fn($date) => Carbon::parse($date)->format('d'))->toArray(),
+            'transactions' => $dates->map(fn($date) => Sale::whereDate('sale_date', $date)->count())->toArray(),
+            'revenue' => $dates->map(fn($date) => Sale::whereDate('sale_date', $date)->sum('total_price'))->toArray(),
+        ];
+
         return view('dashboard', compact(
             'monthlyStats',
-            'topProducts',
-            'chartData'
+            'chartData',
+            'dailyStats',
+            'dailyChartData'
         ));
     }
 }
