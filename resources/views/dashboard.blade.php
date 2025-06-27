@@ -66,18 +66,18 @@
 </div>
 
 <!-- Content Row -->
-<div class="row">
+<div class="row mb-5">
     <!-- Grafik Penjualan Harian -->
     <div class="col-xl-12 col-lg-12">
-        <div class="card shadow mb-4">
+        <div class="card shadow mb-4" style="min-height: 350px;">
             <!-- Card Header -->
             <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                 <h6 class="m-0 font-weight-bold text-primary">Grafik Penjualan Harian</h6>
             </div>
             <!-- Card Body -->
-            <div class="card-body">
-                <div class="chart-area">
-                    <canvas id="dailySalesChart"></canvas>
+            <div class="card-body" style="padding-bottom: 40px;">
+                <div class="chart-area" style="position:relative; min-height:250px; height:40vh;">
+                    <canvas id="dailySalesChart" style="height:100%!important; max-height:350px; width:100%"></canvas>
                 </div>
             </div>
         </div>

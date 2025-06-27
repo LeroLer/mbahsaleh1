@@ -14,6 +14,12 @@ Route::get('/', function () {
 Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
 Route::resource('products', ProductController::class);
+
+// Route halaman export laporan penjualan
+Route::get('/sales/export', [App\Http\Controllers\SaleController::class, 'exportPage'])->name('sales.export.page');
+Route::post('/sales/export', [App\Http\Controllers\SaleController::class, 'export'])->name('sales.export');
+
+// Route resource sales
 Route::resource('sales', SaleController::class);
 
 // Route cetak struk penjualan

@@ -29,21 +29,34 @@
             </div>
 
             <!-- Nav Item - Pages Collapse Menu -->
-            <li class="nav-item {{ request()->routeIs('products.*') || request()->routeIs('sales.*') ? 'active' : '' }}">
+            <li class="nav-item {{ request()->routeIs('sales.*') ? 'active' : '' }}">
                 <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseTwo"
                     aria-expanded="true" aria-controls="collapseTwo">
                     <i class="fas fa-fw fa-cog"></i>
                     <span>Penjualan</span>
                 </a>
-                <div id="collapseTwo" class="collapse {{ request()->routeIs('products.*') || request()->routeIs('sales.*') ? 'show' : '' }}"
+                <div id="collapseTwo" class="collapse {{ request()->routeIs('sales.*') ? 'show' : '' }}"
                      aria-labelledby="headingTwo" data-parent="#accordionSidebar">
                     <div class="bg-white py-2 collapse-inner rounded">
-                        <a class="collapse-item {{ request()->routeIs('products.*') ? 'active' : '' }}"
-                           href="{{ route('products.index') }}">Produk</a>
                         <a class="collapse-item {{ request()->routeIs('sales.*') ? 'active' : '' }}"
-                           href="{{ route('sales.index') }}">Penjualan</a>
+                           href="{{ route('sales.index') }}">Daftar Penjualan</a>
+                        <a class="collapse-item {{ request()->routeIs('sales.export.page') ? 'active' : '' }}"
+                           href="{{ route('sales.export.page') }}">
+                            <i class="fas fa-file-export mr-2"></i>Export Laporan
+                        </a>
                     </div>
                 </div>
+            </li>
+
+            <!-- Heading -->
+            <div class="sidebar-heading">
+                Produk
+            </div>
+            <li class="nav-item {{ request()->routeIs('products.*') ? 'active' : '' }}">
+                <a class="nav-link" href="{{ route('products.index') }}">
+                    <i class="fas fa-box"></i>
+                    <span>Daftar Produk</span>
+                </a>
             </li>
 
             <!-- Divider -->

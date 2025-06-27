@@ -6,6 +6,8 @@ use App\Models\Sale;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Facades\Excel;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class SaleController extends Controller
 {
@@ -111,5 +113,54 @@ class SaleController extends Controller
     {
         $sale = Sale::with('product')->findOrFail($id);
         return view('sales.struk', compact('sale'));
+    }
+
+    public function exportPage()
+    {
+        // Tampilkan halaman/form export laporan penjualan
+        return view('sales.export');
+    }
+
+    public function export(Request $request)
+    {
+        $request->validate([
+            'start_date' => 'required|date',
+            'end_date' => 'required|date',
+            'format' => 'required|in:excel,pdf',
+        ]);
+
+        $sales = \App\Models\Sale::with('product')
+            ->whereDate('sale_date', '>=', $request->start_date)
+            ->whereDate('sale_date', '<=', $request->end_date)
+            ->get();
+
+        $data = $sales->map(function($sale) {
+            return [
+                'Tanggal' => $sale->sale_date,
+                'Produk' => $sale->product ? $sale->product->name : '-',
+                'Jumlah' => $sale->quantity,
+                'Total Harga' => $sale->total_price,
+                'Customer' => $sale->customer_name,
+            ];
+        });
+
+        if ($request->format === 'excel') {
+            $export = new class($data) implements \Maatwebsite\Excel\Concerns\FromCollection, \Maatwebsite\Excel\Concerns\WithHeadings {
+                protected $data;
+                public function __construct($data) { $this->data = $data; }
+                public function collection() { return collect($this->data); }
+                public function headings(): array { return ['Tanggal', 'Produk', 'Jumlah', 'Total Harga', 'Customer']; }
+            };
+            return Excel::download($export, 'laporan-penjualan.xlsx');
+        } else {
+            $pdf = Pdf::loadView('sales.export_pdf', ['data' => $data, 'start_date' => $request->start_date, 'end_date' => $request->end_date]);
+            return $pdf->download('laporan-penjualan.pdf');
+        }
+    }
+
+    public function show($id)
+    {
+        // Tidak ada detail penjualan, redirect ke index atau tampilkan pesan
+        return redirect()->route('sales.index');
     }
 }
