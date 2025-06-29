@@ -96,7 +96,8 @@
                                             @else
                                                 <span class="text-muted">Tidak ada akses</span>
                                             @endif
-                                        </td>
+                                        @endif
+                                    </td>
                                     <td>{{ $user->created_at->format('d/m/Y H:i') }}</td>
                                     <td>
                                         <div class="btn-group" role="group">
