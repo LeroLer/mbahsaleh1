@@ -33,5 +33,7 @@ Route::middleware('auth')->group(function () {
     Route::get('sales/{id}/struk', [SaleController::class, 'printStruk'])->name('sales.struk');
 
     // User management routes (admin only)
-    Route::resource('users', UserController::class);
+    Route::middleware('admin')->group(function () {
+        Route::resource('users', UserController::class);
+    });
 });
