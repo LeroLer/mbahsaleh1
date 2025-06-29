@@ -4,7 +4,7 @@
             <!-- Sidebar - Brand -->
             <a class="sidebar-brand d-flex align-items-center justify-content-center" href="{{ route('dashboard') }}">
                 <div class="sidebar-brand-icon rotate-n-15">
-                    <i class="fas fa-laugh-wink"></i>
+                    <i class="fas fa-fish"></i>
                 </div>
                 <div class="sidebar-brand-text mx-3">Pemancingan</div>
             </a>
@@ -54,6 +54,19 @@
                     <span>Daftar Produk</span>
                 </a>
             </li>
+
+            @if(auth()->user()->isAdmin())
+            <!-- Heading -->
+            <div class="sidebar-heading">
+                Admin
+            </div>
+            <li class="nav-item {{ request()->routeIs('users.*') ? 'active' : '' }}">
+                <a class="nav-link" href="{{ route('users.index') }}">
+                    <i class="fas fa-users"></i>
+                    <span>Manajemen User</span>
+                </a>
+            </li>
+            @endif
 
             <!-- Divider -->
             <hr class="sidebar-divider d-none d-md-block">

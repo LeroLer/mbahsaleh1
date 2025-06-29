@@ -4,26 +4,34 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SaleController;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\UserController;
 
-// Redirect root ke dashboard
+// Redirect root ke login
 Route::get('/', function () {
-    return view('welcome');
+    return redirect('/login');
 });
 
-// Dashboard route
-Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+// Auth routes
+Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
+Route::post('/login', [AuthController::class, 'login']);
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-Route::resource('products', ProductController::class);
+// Protected routes
+Route::middleware('auth')->group(function () {
+    // Dashboard route
+    Route::get('/dashboard', [AuthController::class, 'dashboard'])->name('dashboard');
 
-// Route halaman export laporan penjualan
-Route::get('/sales/export', [App\Http\Controllers\SaleController::class, 'exportPage'])->name('sales.export.page');
-Route::post('/sales/export', [App\Http\Controllers\SaleController::class, 'export'])->name('sales.export');
+    // Product routes
+    Route::resource('products', ProductController::class);
 
-// Route preview penjualan
-Route::post('/sales/preview', [App\Http\Controllers\SaleController::class, 'preview'])->name('sales.preview');
+    // Sales routes
+    Route::get('/sales/export', [SaleController::class, 'exportPage'])->name('sales.export.page');
+    Route::post('/sales/export', [SaleController::class, 'export'])->name('sales.export');
+    Route::post('/sales/preview', [SaleController::class, 'preview'])->name('sales.preview');
+    Route::resource('sales', SaleController::class);
+    Route::get('sales/{id}/struk', [SaleController::class, 'printStruk'])->name('sales.struk');
 
-// Route resource sales
-Route::resource('sales', SaleController::class);
-
-// Route cetak struk penjualan
-Route::get('sales/{id}/struk', [SaleController::class, 'printStruk'])->name('sales.struk');
+    // User management routes (admin only)
+    Route::resource('users', UserController::class);
+});

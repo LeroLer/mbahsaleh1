@@ -114,9 +114,6 @@
                             <button type="submit" class="btn btn-info">
                                 <i class="fas fa-eye"></i> Preview
                             </button>
-                            <button type="button" class="btn btn-primary" onclick="submitDirect()">
-                                <i class="fas fa-save"></i> Simpan Langsung
-                            </button>
                         </div>
                     </div>
                 </form>

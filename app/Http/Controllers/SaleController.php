@@ -11,9 +11,50 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class SaleController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+
     public function index()
     {
-        $sales = Sale::with('product')->latest()->paginate(10);
+        // Ambil semua penjualan dengan relasi product, diurutkan berdasarkan tanggal terbaru
+        $allSales = Sale::with('product')
+            ->orderBy('sale_date', 'desc')
+            ->orderBy('customer_name')
+            ->get();
+
+        // Kelompokkan penjualan berdasarkan tanggal dan customer
+        $groupedSales = $allSales->groupBy(function($sale) {
+            return $sale->sale_date->format('Y-m-d H:i') . '|' . $sale->customer_name;
+        });
+
+        // Buat array untuk ditampilkan di view
+        $sales = [];
+        foreach ($groupedSales as $key => $salesGroup) {
+            $firstSale = $salesGroup->first();
+            $totalAmount = $salesGroup->sum('total_price');
+            $totalQuantity = $salesGroup->sum('quantity');
+
+            $sales[] = [
+                'id' => $firstSale->id, // ID penjualan pertama sebagai representasi
+                'sale_date' => $firstSale->sale_date,
+                'customer_name' => $firstSale->customer_name,
+                'products' => $salesGroup->map(function($sale) {
+                    return [
+                        'name' => $sale->product->name,
+                        'quantity' => $sale->quantity,
+                        'price_per_kg' => $sale->product->price,
+                        'total_price' => $sale->total_price,
+                    ];
+                }),
+                'total_quantity' => $totalQuantity,
+                'total_amount' => $totalAmount,
+                'item_count' => $salesGroup->count(),
+                'all_sale_ids' => $salesGroup->pluck('id')->toArray(), // Semua ID untuk aksi
+            ];
+        }
+
         return view('sales.index', compact('sales'));
     }
 
