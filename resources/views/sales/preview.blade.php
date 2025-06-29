@@ -10,7 +10,7 @@
 
 <!-- Content Row -->
 <div class="row">
-    <div class="col-xl-8 col-lg-8 mx-auto">
+    <div class="col-xl-10 col-lg-10 mx-auto">
         <div class="card shadow mb-4">
             <!-- Card Header -->
             <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
@@ -18,27 +18,40 @@
             </div>
             <!-- Card Body -->
             <div class="card-body">
+                <!-- Products Table -->
+                <div class="table-responsive mb-4">
+                    <table class="table table-bordered">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>No</th>
+                                <th>Produk</th>
+                                <th>Harga per kg</th>
+                                <th>Jumlah (kg)</th>
+                                <th>Total Harga</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($products as $index => $product)
+                                <tr>
+                                    <td>{{ $index + 1 }}</td>
+                                    <td>{{ $product['name'] }}</td>
+                                    <td>Rp {{ number_format($product['price'], 0, ',', '.') }}</td>
+                                    <td>{{ $product['quantity'] }}</td>
+                                    <td class="text-right">Rp {{ number_format($product['total'], 0, ',', '.') }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                        <tfoot class="table-info">
+                            <tr>
+                                <td colspan="4" class="text-right font-weight-bold">Total Keseluruhan:</td>
+                                <td class="text-right font-weight-bold">Rp {{ number_format($grandTotal, 0, ',', '.') }}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                <!-- Transaction Info -->
                 <div class="row">
-                    <div class="col-md-6">
-                        <table class="table table-borderless">
-                            <tr>
-                                <td class="font-weight-bold">Produk:</td>
-                                <td>{{ $product->name }}</td>
-                            </tr>
-                            <tr>
-                                <td class="font-weight-bold">Harga per kg:</td>
-                                <td>Rp {{ number_format($product->price, 0, ',', '.') }}</td>
-                            </tr>
-                            <tr>
-                                <td class="font-weight-bold">Jumlah:</td>
-                                <td>{{ $quantity }} kg</td>
-                            </tr>
-                            <tr>
-                                <td class="font-weight-bold">Total Harga:</td>
-                                <td class="text-primary font-weight-bold">Rp {{ number_format($total_price, 0, ',', '.') }}</td>
-                            </tr>
-                        </table>
-                    </div>
                     <div class="col-md-6">
                         <table class="table table-borderless">
                             <tr>
@@ -48,6 +61,10 @@
                             <tr>
                                 <td class="font-weight-bold">Nama Pelanggan:</td>
                                 <td>{{ $customer_name ?: '-' }}</td>
+                            </tr>
+                            <tr>
+                                <td class="font-weight-bold">Jumlah Produk:</td>
+                                <td>{{ count($products) }} item</td>
                             </tr>
                         </table>
                     </div>
@@ -67,8 +84,10 @@
                     <div>
                         <form action="{{ route('sales.store') }}" method="POST" class="d-inline">
                             @csrf
-                            <input type="hidden" name="product_id" value="{{ $product->id }}">
-                            <input type="hidden" name="quantity" value="{{ $quantity }}">
+                            @foreach($products as $index => $product)
+                                <input type="hidden" name="products[{{ $index }}][product_id]" value="{{ $product['id'] }}">
+                                <input type="hidden" name="products[{{ $index }}][quantity]" value="{{ $product['quantity'] }}">
+                            @endforeach
                             <input type="hidden" name="sale_date" value="{{ $sale_date }}">
                             <input type="hidden" name="customer_name" value="{{ $customer_name }}">
                             <button type="submit" class="btn btn-success">

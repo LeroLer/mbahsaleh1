@@ -26,19 +26,33 @@ class SaleController extends Controller
     public function preview(Request $request)
     {
         $request->validate([
-            'product_id' => 'required|exists:products,id',
-            'quantity' => 'required|numeric|min:0.01',
+            'products' => 'required|array|min:1',
+            'products.*.product_id' => 'required|exists:products,id',
+            'products.*.quantity' => 'required|numeric|min:0.01',
             'sale_date' => 'required|date',
             'customer_name' => 'nullable|string|max:255',
         ]);
 
-        $product = Product::findOrFail($request->product_id);
-        $total_price = $product->price * $request->quantity;
+        $products = [];
+        $grandTotal = 0;
+
+        foreach ($request->products as $productData) {
+            $product = Product::findOrFail($productData['product_id']);
+            $total = $product->price * $productData['quantity'];
+            $grandTotal += $total;
+
+            $products[] = [
+                'id' => $product->id,
+                'name' => $product->name,
+                'price' => $product->price,
+                'quantity' => $productData['quantity'],
+                'total' => $total,
+            ];
+        }
 
         return view('sales.preview', [
-            'product' => $product,
-            'quantity' => $request->quantity,
-            'total_price' => $total_price,
+            'products' => $products,
+            'grandTotal' => $grandTotal,
             'sale_date' => $request->sale_date,
             'customer_name' => $request->customer_name,
         ]);
@@ -47,8 +61,9 @@ class SaleController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'product_id' => 'required|exists:products,id',
-            'quantity' => 'required|numeric|min:0.01',
+            'products' => 'required|array|min:1',
+            'products.*.product_id' => 'required|exists:products,id',
+            'products.*.quantity' => 'required|numeric|min:0.01',
             'sale_date' => 'required|date',
             'customer_name' => 'nullable|string|max:255',
         ]);
@@ -56,16 +71,18 @@ class SaleController extends Controller
         try {
             DB::beginTransaction();
 
-            $product = Product::findOrFail($request->product_id);
-            $total_price = $product->price * $request->quantity;
+            foreach ($request->products as $productData) {
+                $product = Product::findOrFail($productData['product_id']);
+                $total_price = $product->price * $productData['quantity'];
 
-            $sale = Sale::create([
-                'product_id' => $request->product_id,
-                'quantity' => $request->quantity,
-                'total_price' => $total_price,
-                'sale_date' => $request->sale_date,
-                'customer_name' => $request->customer_name,
-            ]);
+                Sale::create([
+                    'product_id' => $productData['product_id'],
+                    'quantity' => $productData['quantity'],
+                    'total_price' => $total_price,
+                    'sale_date' => $request->sale_date,
+                    'customer_name' => $request->customer_name,
+                ]);
+            }
 
             DB::commit();
 

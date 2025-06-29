@@ -15,48 +15,78 @@
             <!-- Card Header -->
             <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                 <h6 class="m-0 font-weight-bold text-primary">Form Penjualan</h6>
+                <button type="button" class="btn btn-success btn-sm" onclick="addProductRow()">
+                    <i class="fas fa-plus"></i> Tambah Produk
+                </button>
             </div>
             <!-- Card Body -->
             <div class="card-body">
-                <form action="{{ route('sales.preview') }}" method="POST">
+                <form action="{{ route('sales.preview') }}" method="POST" id="salesForm">
                     @csrf
 
-                    <div class="form-group">
-                        <label for="product_id" class="font-weight-bold">Produk</label>
-                        <select class="form-control @error('product_id') is-invalid @enderror"
-                                id="product_id" name="product_id" required>
-                            <option value="">Pilih Produk</option>
-                            @foreach($products as $product)
-                                <option value="{{ $product->id }}"
-                                        data-price="{{ $product->price }}"
-                                        {{ old('product_id') == $product->id ? 'selected' : '' }}>
-                                    {{ $product->name }} - Rp {{ number_format($product->price, 0, ',', '.') }}
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('product_id')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-
-                    <div class="form-group">
-                        <label for="quantity">Jumlah</label>
-                        <input type="number" step="0.01" min="0.01" class="form-control @error('quantity') is-invalid @enderror"
-                               id="quantity" name="quantity" value="{{ old('quantity') }}" required>
-                        @error('quantity')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-
-                    <div class="form-group">
-                        <label for="total_price" class="font-weight-bold">Total Harga</label>
-                        <div class="input-group">
-                            <div class="input-group-prepend">
-                                <span class="input-group-text">Rp</span>
+                    <!-- Dynamic Product Rows -->
+                    <div id="productRows">
+                        <div class="product-row border rounded p-3 mb-3" data-row="0">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label class="font-weight-bold">Produk</label>
+                                        <select class="form-control product-select" name="products[0][product_id]" required>
+                                            <option value="">Pilih Produk</option>
+                                            @foreach($products as $product)
+                                                <option value="{{ $product->id }}" data-price="{{ $product->price }}">
+                                                    {{ $product->name }} - Rp {{ number_format($product->price, 0, ',', '.') }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label>Jumlah (kg)</label>
+                                        <input type="number" step="0.01" min="0.01" class="form-control product-quantity"
+                                               name="products[0][quantity]" value="" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label>Total Harga</label>
+                                        <div class="input-group">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text">Rp</span>
+                                            </div>
+                                            <input type="text" class="form-control product-total" readonly>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="form-group">
+                                        <label>&nbsp;</label>
+                                        <button type="button" class="btn btn-danger btn-block" onclick="removeProductRow(this)" style="display: none;">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
-                            <input type="text" class="form-control" id="total_price" readonly>
                         </div>
                     </div>
+
+                    <!-- Grand Total -->
+                    <div class="row">
+                        <div class="col-md-6 offset-md-6">
+                            <div class="form-group">
+                                <label class="font-weight-bold">Total Keseluruhan</label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">Rp</span>
+                                    </div>
+                                    <input type="text" class="form-control" id="grandTotal" readonly>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
 
                     <div class="form-group">
                         <label for="sale_date" class="font-weight-bold">Tanggal Penjualan</label>
@@ -98,21 +128,104 @@
 
 @push('scripts')
 <script>
-    $(document).ready(function() {
-        function calculateTotal() {
-            var price = $('#product_id option:selected').data('price') || 0;
-            var quantity = $('#quantity').val() || 0;
-            var total = price * quantity;
-            $('#total_price').val(total.toLocaleString('id-ID'));
-        }
+    let rowCounter = 1;
 
-        $('#product_id, #quantity').on('change keyup', calculateTotal);
+    $(document).ready(function() {
+        calculateGrandTotal();
+
+        // Event delegation for dynamic elements
+        $(document).on('change keyup', '.product-select, .product-quantity', function() {
+            calculateRowTotal($(this).closest('.product-row'));
+            calculateGrandTotal();
+        });
     });
+
+    function addProductRow() {
+        const newRow = `
+            <div class="product-row border rounded p-3 mb-3" data-row="${rowCounter}">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label class="font-weight-bold">Produk</label>
+                            <select class="form-control product-select" name="products[${rowCounter}][product_id]" required>
+                                <option value="">Pilih Produk</option>
+                                @foreach($products as $product)
+                                    <option value="{{ $product->id }}" data-price="{{ $product->price }}">
+                                        {{ $product->name }} - Rp {{ number_format($product->price, 0, ',', '.') }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>Jumlah (kg)</label>
+                            <input type="number" step="0.01" min="0.01" class="form-control product-quantity"
+                                   name="products[${rowCounter}][quantity]" value="" required>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>Total Harga</label>
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">Rp</span>
+                                </div>
+                                <input type="text" class="form-control product-total" readonly>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label>&nbsp;</label>
+                            <button type="button" class="btn btn-danger btn-block" onclick="removeProductRow(this)">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        $('#productRows').append(newRow);
+        rowCounter++;
+
+        // Show remove button for first row if there are multiple rows
+        if ($('.product-row').length > 1) {
+            $('.product-row:first .btn-danger').show();
+        }
+    }
+
+    function removeProductRow(button) {
+        $(button).closest('.product-row').remove();
+        calculateGrandTotal();
+
+        // Hide remove button for first row if only one row remains
+        if ($('.product-row').length === 1) {
+            $('.product-row:first .btn-danger').hide();
+        }
+    }
+
+    function calculateRowTotal(row) {
+        const price = row.find('.product-select option:selected').data('price') || 0;
+        const quantity = row.find('.product-quantity').val() || 0;
+        const total = price * quantity;
+        row.find('.product-total').val(total.toLocaleString('id-ID'));
+    }
+
+    function calculateGrandTotal() {
+        let grandTotal = 0;
+        $('.product-total').each(function() {
+            const value = $(this).val().replace(/[^\d]/g, '') || 0;
+            grandTotal += parseInt(value);
+        });
+        $('#grandTotal').val(grandTotal.toLocaleString('id-ID'));
+    }
 
     function submitDirect() {
         // Ubah action form ke store langsung
-        $('form').attr('action', '{{ route("sales.store") }}');
-        $('form').submit();
+        $('#salesForm').attr('action', '{{ route("sales.store") }}');
+        $('#salesForm').submit();
     }
 </script>
 @endpush
