@@ -40,10 +40,6 @@
                     <div class="bg-white py-2 collapse-inner rounded">
                         <a class="collapse-item {{ request()->routeIs('sales.*') ? 'active' : '' }}"
                            href="{{ route('sales.index') }}">Daftar Penjualan</a>
-                        <a class="collapse-item {{ request()->routeIs('sales.export.page') ? 'active' : '' }}"
-                           href="{{ route('sales.export.page') }}">
-                            <i class="fas fa-file-export mr-2"></i>Export Laporan
-                        </a>
                     </div>
                 </div>
             </li>
