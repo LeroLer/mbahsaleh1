@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
 
 class ProductController extends Controller
 {
@@ -16,11 +17,23 @@ class ProductController extends Controller
 
     public function create()
     {
+        // Check if user is admin
+        if (!Auth::check() || Auth::user()->role !== 'admin') {
+            return redirect()->route('products.index')
+                ->with('error', 'Akses ditolak. Hanya admin yang dapat menambah produk.');
+        }
+
         return view('products.create');
     }
 
     public function store(Request $request)
     {
+        // Check if user is admin
+        if (!Auth::check() || Auth::user()->role !== 'admin') {
+            return redirect()->route('products.index')
+                ->with('error', 'Akses ditolak. Hanya admin yang dapat menambah produk.');
+        }
+
         $validated = $request->validate([
             'name' => 'required|max:255',
             'description' => 'required',
@@ -41,11 +54,23 @@ class ProductController extends Controller
 
     public function edit(Product $product)
     {
+        // Check if user is admin
+        if (!Auth::check() || Auth::user()->role !== 'admin') {
+            return redirect()->route('products.index')
+                ->with('error', 'Akses ditolak. Hanya admin yang dapat mengedit produk.');
+        }
+
         return view('products.edit', compact('product'));
     }
 
     public function update(Request $request, Product $product)
     {
+        // Check if user is admin
+        if (!Auth::check() || Auth::user()->role !== 'admin') {
+            return redirect()->route('products.index')
+                ->with('error', 'Akses ditolak. Hanya admin yang dapat mengupdate produk.');
+        }
+
         $validated = $request->validate([
             'name' => 'required|max:255',
             'description' => 'required',
@@ -70,6 +95,12 @@ class ProductController extends Controller
 
     public function destroy(Product $product)
     {
+        // Check if user is admin
+        if (!Auth::check() || Auth::user()->role !== 'admin') {
+            return redirect()->route('products.index')
+                ->with('error', 'Akses ditolak. Hanya admin yang dapat menghapus produk.');
+        }
+
         // Hapus gambar jika ada
         if ($product->image) {
             Storage::disk('public')->delete($product->image);

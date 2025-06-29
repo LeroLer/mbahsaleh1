@@ -6,9 +6,11 @@
 <!-- Page Heading -->
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
     <h1 class="h3 mb-0 text-gray-800">Daftar Produk</h1>
+    @if(auth()->user()->isAdmin())
     <a href="{{ route('products.create') }}" class="d-none d-sm-inline-block btn btn-primary shadow-sm">
         <i class="fas fa-plus fa-sm text-white-50"></i> Tambah Produk
     </a>
+    @endif
 </div>
 
 <!-- Content Row -->
@@ -60,6 +62,7 @@
                                     <td>{{ Str::limit($product->description, 100) }}</td>
                                     <td>Rp {{ number_format($product->price, 0, ',', '.') }}</td>
                                     <td>
+                                        @if(auth()->user()->isAdmin())
                                         <div class="btn-group" role="group">
                                             <a href="{{ route('products.edit', $product->id) }}" class="btn btn-warning btn-sm">
                                                 <i class="fas fa-edit"></i>
@@ -73,6 +76,9 @@
                                                 </button>
                                             </form>
                                         </div>
+                                        @else
+                                        <span class="text-muted">Tidak ada aksi</span>
+                                        @endif
                                     </td>
                                 </tr>
                             @empty
