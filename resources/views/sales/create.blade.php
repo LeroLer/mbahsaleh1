@@ -18,7 +18,7 @@
             </div>
             <!-- Card Body -->
             <div class="card-body">
-                <form action="{{ route('sales.store') }}" method="POST">
+                <form action="{{ route('sales.preview') }}" method="POST">
                     @csrf
 
                     <div class="form-group">
@@ -80,9 +80,14 @@
                         <a href="{{ route('sales.index') }}" class="btn btn-secondary">
                             <i class="fas fa-arrow-left"></i> Kembali
                         </a>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-save"></i> Simpan
-                        </button>
+                        <div>
+                            <button type="submit" class="btn btn-info">
+                                <i class="fas fa-eye"></i> Preview
+                            </button>
+                            <button type="button" class="btn btn-primary" onclick="submitDirect()">
+                                <i class="fas fa-save"></i> Simpan Langsung
+                            </button>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -103,5 +108,11 @@
 
         $('#product_id, #quantity').on('change keyup', calculateTotal);
     });
+
+    function submitDirect() {
+        // Ubah action form ke store langsung
+        $('form').attr('action', '{{ route("sales.store") }}');
+        $('form').submit();
+    }
 </script>
 @endpush

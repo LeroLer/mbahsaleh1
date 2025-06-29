@@ -19,6 +19,9 @@ Route::resource('products', ProductController::class);
 Route::get('/sales/export', [App\Http\Controllers\SaleController::class, 'exportPage'])->name('sales.export.page');
 Route::post('/sales/export', [App\Http\Controllers\SaleController::class, 'export'])->name('sales.export');
 
+// Route preview penjualan
+Route::post('/sales/preview', [App\Http\Controllers\SaleController::class, 'preview'])->name('sales.preview');
+
 // Route resource sales
 Route::resource('sales', SaleController::class);
 

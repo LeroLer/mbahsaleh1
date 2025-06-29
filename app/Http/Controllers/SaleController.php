@@ -23,6 +23,27 @@ class SaleController extends Controller
         return view('sales.create', compact('products'));
     }
 
+    public function preview(Request $request)
+    {
+        $request->validate([
+            'product_id' => 'required|exists:products,id',
+            'quantity' => 'required|numeric|min:0.01',
+            'sale_date' => 'required|date',
+            'customer_name' => 'nullable|string|max:255',
+        ]);
+
+        $product = Product::findOrFail($request->product_id);
+        $total_price = $product->price * $request->quantity;
+
+        return view('sales.preview', [
+            'product' => $product,
+            'quantity' => $request->quantity,
+            'total_price' => $total_price,
+            'sale_date' => $request->sale_date,
+            'customer_name' => $request->customer_name,
+        ]);
+    }
+
     public function store(Request $request)
     {
         $request->validate([
