@@ -8,12 +8,6 @@ use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware('auth');
-        $this->middleware('admin');
-    }
-
     public function index()
     {
         $users = User::all();
@@ -34,11 +28,17 @@ class UserController extends Controller
             'role' => 'required|in:admin,kasir',
         ]);
 
+        $permissions = [];
+        if ($request->role === 'kasir' && $request->has('permissions')) {
+            $permissions = $request->permissions;
+        }
+
         User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'role' => $request->role,
+            'permissions' => $permissions,
         ]);
 
         return redirect()->route('users.index')
@@ -58,10 +58,16 @@ class UserController extends Controller
             'role' => 'required|in:admin,kasir',
         ]);
 
+        $permissions = [];
+        if ($request->role === 'kasir' && $request->has('permissions')) {
+            $permissions = $request->permissions;
+        }
+
         $user->update([
             'name' => $request->name,
             'email' => $request->email,
             'role' => $request->role,
+            'permissions' => $permissions,
         ]);
 
         if ($request->filled('password')) {

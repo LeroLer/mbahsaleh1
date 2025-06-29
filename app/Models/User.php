@@ -22,6 +22,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'permissions',
     ];
 
     /**
@@ -44,6 +45,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'permissions' => 'array',
         ];
     }
 
@@ -61,5 +63,50 @@ class User extends Authenticatable
     public function isKasir(): bool
     {
         return $this->role === 'kasir';
+    }
+
+    /**
+     * Check if user has specific permission
+     */
+    public function hasPermission(string $permission): bool
+    {
+        if ($this->isAdmin()) {
+            return true; // Admin has all permissions
+        }
+
+        return in_array($permission, $this->permissions ?? []);
+    }
+
+    /**
+     * Check if user has any of the given permissions
+     */
+    public function hasAnyPermission(array $permissions): bool
+    {
+        if ($this->isAdmin()) {
+            return true;
+        }
+
+        return !empty(array_intersect($permissions, $this->permissions ?? []));
+    }
+
+    /**
+     * Get available permissions
+     */
+    public static function getAvailablePermissions(): array
+    {
+        return [
+            'view_dashboard' => 'Lihat Dashboard',
+            'view_sales' => 'Lihat Penjualan',
+            'create_sales' => 'Tambah Penjualan',
+            'edit_sales' => 'Edit Penjualan',
+            'delete_sales' => 'Hapus Penjualan',
+            'print_struk' => 'Cetak Struk',
+            'export_sales' => 'Export Laporan Penjualan',
+            'view_products' => 'Lihat Produk',
+            'create_products' => 'Tambah Produk',
+            'edit_products' => 'Edit Produk',
+            'delete_products' => 'Hapus Produk',
+            'manage_users' => 'Kelola User',
+        ];
     }
 }

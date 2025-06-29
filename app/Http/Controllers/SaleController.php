@@ -11,11 +11,6 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class SaleController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware('auth');
-    }
-
     public function index()
     {
         // Ambil semua penjualan dengan relasi product, diurutkan berdasarkan tanggal terbaru

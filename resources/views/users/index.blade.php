@@ -47,6 +47,7 @@
                                 <th>Nama</th>
                                 <th>Email</th>
                                 <th>Role</th>
+                                <th>Hak Akses</th>
                                 <th>Tanggal Dibuat</th>
                                 <th>Aksi</th>
                             </tr>
@@ -64,6 +65,38 @@
                                             <span class="badge badge-info">Kasir</span>
                                         @endif
                                     </td>
+                                    <td>
+                                        @if($user->isAdmin())
+                                            <span class="badge badge-success">Semua Akses</span>
+                                        @else
+                                            @php
+                                                $permissions = $user->permissions ?? [];
+                                                $permissionLabels = [
+                                                    'view_dashboard' => 'Dashboard',
+                                                    'view_sales' => 'Lihat Penjualan',
+                                                    'create_sales' => 'Tambah Penjualan',
+                                                    'edit_sales' => 'Edit Penjualan',
+                                                    'delete_sales' => 'Hapus Penjualan',
+                                                    'print_struk' => 'Cetak Struk',
+                                                    'export_sales' => 'Export Laporan',
+                                                    'view_products' => 'Lihat Produk',
+                                                    'create_products' => 'Tambah Produk',
+                                                    'edit_products' => 'Edit Produk',
+                                                    'delete_products' => 'Hapus Produk',
+                                                    'manage_users' => 'Kelola User',
+                                                ];
+                                            @endphp
+                                            @if(count($permissions) > 0)
+                                                @foreach(array_slice($permissions, 0, 3) as $permission)
+                                                    <span class="badge badge-secondary">{{ $permissionLabels[$permission] ?? $permission }}</span>
+                                                @endforeach
+                                                @if(count($permissions) > 3)
+                                                    <span class="badge badge-light">+{{ count($permissions) - 3 }} lagi</span>
+                                                @endif
+                                            @else
+                                                <span class="text-muted">Tidak ada akses</span>
+                                            @endif
+                                        </td>
                                     <td>{{ $user->created_at->format('d/m/Y H:i') }}</td>
                                     <td>
                                         <div class="btn-group" role="group">
@@ -85,7 +118,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="6" class="text-center">Tidak ada data user</td>
+                                    <td colspan="7" class="text-center">Tidak ada data user</td>
                                 </tr>
                             @endforelse
                         </tbody>

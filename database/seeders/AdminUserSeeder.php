@@ -19,6 +19,7 @@ class AdminUserSeeder extends Seeder
             'email' => 'admin@pemancingan.com',
             'password' => Hash::make('admin123'),
             'role' => 'admin',
+            'permissions' => [], // Admin tidak perlu permissions karena otomatis punya semua akses
         ]);
 
         User::create([
@@ -26,6 +27,13 @@ class AdminUserSeeder extends Seeder
             'email' => 'kasir@pemancingan.com',
             'password' => Hash::make('kasir123'),
             'role' => 'kasir',
+            'permissions' => [
+                'view_dashboard',
+                'view_sales',
+                'create_sales',
+                'print_struk',
+                'view_products'
+            ],
         ]);
     }
 }
