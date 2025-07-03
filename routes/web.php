@@ -33,11 +33,20 @@ Route::middleware('auth')->group(function () {
     });
 
     // Sales routes
-    Route::get('/sales/export', [SaleController::class, 'exportPage'])->name('sales.export.page');
-    Route::post('/sales/export', [SaleController::class, 'export'])->name('sales.export');
     Route::post('/sales/preview', [SaleController::class, 'preview'])->name('sales.preview');
-    Route::resource('sales', SaleController::class);
+    Route::get('/sales', [SaleController::class, 'index'])->name('sales.index');
+    Route::get('/sales/create', [SaleController::class, 'create'])->name('sales.create');
+    Route::post('/sales', [SaleController::class, 'store'])->name('sales.store');
     Route::get('sales/{id}/struk', [SaleController::class, 'printStruk'])->name('sales.struk');
+
+    // Sales routes yang memerlukan admin
+    Route::middleware('admin')->group(function () {
+        Route::get('/sales/export', [SaleController::class, 'exportPage'])->name('sales.export.page');
+        Route::post('/sales/export', [SaleController::class, 'export'])->name('sales.export');
+        Route::get('/sales/{sale}/edit', [SaleController::class, 'edit'])->name('sales.edit');
+        Route::put('/sales/{sale}', [SaleController::class, 'update'])->name('sales.update');
+        Route::delete('/sales/{sale}', [SaleController::class, 'destroy'])->name('sales.destroy');
+    });
 
     // User management routes (admin only)
     Route::middleware('admin')->group(function () {

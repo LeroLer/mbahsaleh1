@@ -101,7 +101,8 @@ class UserController extends Controller
             'permissions' => $permissions,
         ]);
 
-        if ($request->filled('password')) {
+        // Only update password if change_password checkbox is checked
+        if ($request->has('change_password') && $request->filled('password')) {
             $request->validate([
                 'password' => 'required|string|min:8|confirmed',
             ]);

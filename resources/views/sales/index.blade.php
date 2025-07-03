@@ -7,9 +7,11 @@
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
     <h1 class="h3 mb-0 text-gray-800">Daftar Penjualan</h1>
     <div>
+        @if(auth()->user()->isAdmin())
         <a href="{{ route('sales.export.page') }}" class="d-none d-sm-inline-block btn btn-success shadow-sm me-2">
             <i class="fas fa-file-export fa-sm text-white-50"></i> Export Laporan
         </a>
+        @endif
         <a href="{{ route('sales.create') }}" class="d-none d-sm-inline-block btn btn-primary shadow-sm">
             <i class="fas fa-plus fa-sm text-white-50"></i> Tambah Penjualan
         </a>
@@ -132,16 +134,19 @@
                                     <td>{{ $sale['customer_name'] ?: '-' }}</td>
                                     <td>
                                         <div class="btn-group" role="group">
-                                            <a href="{{ route('sales.edit', $sale['id']) }}" class="btn btn-warning btn-sm">
+                                            @if(auth()->user()->isAdmin())
+                                            <a href="{{ route('sales.edit', $sale['id']) }}" class="btn btn-warning btn-sm" title="Edit Penjualan">
                                                 <i class="fas fa-edit"></i>
                                             </a>
-                                            <a href="{{ route('sales.struk', $sale['id']) }}" class="btn btn-info btn-sm" target="_blank">
-                                                <i class="fas fa-print"></i>
-                                            </a>
                                             <button type="button" class="btn btn-danger btn-sm"
-                                                    onclick="deleteSales({{ json_encode($sale['all_sale_ids']) }})">
+                                                    onclick="deleteSales({{ json_encode($sale['all_sale_ids']) }})"
+                                                    title="Hapus Penjualan">
                                                 <i class="fas fa-trash"></i>
                                             </button>
+                                            @endif
+                                            <a href="{{ route('sales.struk', $sale['id']) }}" class="btn btn-info btn-sm" target="_blank" title="Cetak Struk">
+                                                <i class="fas fa-print"></i>
+                                            </a>
                                         </div>
                                     </td>
                                 </tr>

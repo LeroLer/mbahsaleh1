@@ -41,18 +41,28 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="password" class="font-weight-bold">Password Baru (kosongkan jika tidak ingin mengubah)</label>
-                        <input type="password" class="form-control @error('password') is-invalid @enderror"
-                               id="password" name="password">
-                        @error('password')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="change_password" name="change_password">
+                            <label class="form-check-label" for="change_password">
+                                Ubah Password
+                            </label>
+                        </div>
+                        <div id="password_fields" style="display: none;">
+                            <div class="form-group">
+                                <label for="password" class="font-weight-bold">Password Baru</label>
+                                <input type="password" class="form-control @error('password') is-invalid @enderror"
+                                       id="password" name="password">
+                                @error('password')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
 
-                    <div class="form-group">
-                        <label for="password_confirmation" class="font-weight-bold">Konfirmasi Password Baru</label>
-                        <input type="password" class="form-control"
-                               id="password_confirmation" name="password_confirmation">
+                            <div class="form-group">
+                                <label for="password_confirmation" class="font-weight-bold">Konfirmasi Password Baru</label>
+                                <input type="password" class="form-control"
+                                       id="password_confirmation" name="password_confirmation">
+                            </div>
+                        </div>
                     </div>
 
                     <div class="form-group">
@@ -226,6 +236,7 @@
 @push('scripts')
 <script>
     $(document).ready(function() {
+        // Role change handler
         $('#role').change(function() {
             const role = $(this).val();
             const permissionsSection = $('#permissionsSection');
@@ -242,8 +253,29 @@
             }
         });
 
-        // Trigger change event on page load
+        // Password change handler
+        $('#change_password').change(function() {
+            const passwordFields = $('#password_fields');
+            const passwordInput = $('#password');
+            const passwordConfirmationInput = $('#password_confirmation');
+
+            if ($(this).is(':checked')) {
+                passwordFields.show();
+                passwordInput.prop('required', true);
+                passwordConfirmationInput.prop('required', true);
+            } else {
+                passwordFields.hide();
+                passwordInput.prop('required', false);
+                passwordConfirmationInput.prop('required', false);
+                // Clear password fields when unchecked
+                passwordInput.val('');
+                passwordConfirmationInput.val('');
+            }
+        });
+
+        // Trigger change events on page load
         $('#role').trigger('change');
+        $('#change_password').trigger('change');
     });
 </script>
 @endpush

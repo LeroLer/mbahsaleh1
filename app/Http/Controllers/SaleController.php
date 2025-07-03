@@ -6,6 +6,7 @@ use App\Models\Sale;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Facades\Excel;
 use Barryvdh\DomPDF\Facade\Pdf;
 
@@ -133,12 +134,24 @@ class SaleController extends Controller
 
     public function edit(Sale $sale)
     {
+        // Check if user is admin
+        if (!Auth::check() || Auth::user()->role !== 'admin') {
+            return redirect()->route('sales.index')
+                ->with('error', 'Akses ditolak. Hanya admin yang dapat mengedit penjualan.');
+        }
+
         $products = Product::all();
         return view('sales.edit', compact('sale', 'products'));
     }
 
     public function update(Request $request, Sale $sale)
     {
+        // Check if user is admin
+        if (!Auth::check() || Auth::user()->role !== 'admin') {
+            return redirect()->route('sales.index')
+                ->with('error', 'Akses ditolak. Hanya admin yang dapat mengupdate penjualan.');
+        }
+
         $request->validate([
             'product_id' => 'required|exists:products,id',
             'quantity' => 'required|numeric|min:0.01',
@@ -173,6 +186,12 @@ class SaleController extends Controller
 
     public function destroy(Sale $sale)
     {
+        // Check if user is admin
+        if (!Auth::check() || Auth::user()->role !== 'admin') {
+            return redirect()->route('sales.index')
+                ->with('error', 'Akses ditolak. Hanya admin yang dapat menghapus penjualan.');
+        }
+
         try {
             $sale->delete();
             return redirect()->route('sales.index')
@@ -185,8 +204,27 @@ class SaleController extends Controller
 
     public function printStruk($id)
     {
-        $sale = Sale::with('product')->findOrFail($id);
-        return view('sales.struk', compact('sale'));
+        // Ambil sale pertama untuk mendapatkan informasi transaksi
+        $firstSale = Sale::with('product')->findOrFail($id);
+
+        // Ambil semua sale dengan tanggal dan customer yang sama
+        $allSales = Sale::with('product')
+            ->where('sale_date', $firstSale->sale_date)
+            ->where('customer_name', $firstSale->customer_name)
+            ->get();
+
+        // Hitung total
+        $totalAmount = $allSales->sum('total_price');
+        $totalQuantity = $allSales->sum('quantity');
+
+        return view('sales.struk', [
+            'sales' => $allSales,
+            'sale_date' => $firstSale->sale_date,
+            'customer_name' => $firstSale->customer_name,
+            'total_amount' => $totalAmount,
+            'total_quantity' => $totalQuantity,
+            'item_count' => $allSales->count()
+        ]);
     }
 
     public function exportPage()
