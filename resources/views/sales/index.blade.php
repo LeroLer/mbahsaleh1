@@ -24,7 +24,14 @@
         <div class="card shadow mb-4">
             <!-- Card Header -->
             <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                <h6 class="m-0 font-weight-bold text-primary">Data Penjualan</h6>
+                <div>
+                    <h6 class="m-0 font-weight-bold text-primary">Data Penjualan</h6>
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle"></i>
+                        ID bersifat konsisten dan tidak berubah saat filtering.
+                        Urutkan berdasarkan tanggal untuk melihat data terbaru.
+                    </small>
+                </div>
             </div>
             <!-- Card Body -->
             <div class="card-body">
@@ -50,8 +57,8 @@
                     <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
                         <thead>
                             <tr>
-                                <th>No</th>
-                                <th>ID Penjualan</th>
+                                <th title="ID konsisten dari database - tidak berubah saat filtering">ID <i class="fas fa-question-circle text-info"></i></th>
+                                <th>Detail ID</th>
                                 <th>Tanggal</th>
                                 <th>Produk</th>
                                 <th>Total Kuantitas</th>
@@ -63,11 +70,14 @@
                         <tbody>
                             @forelse ($sales as $sale)
                                 <tr>
-                                    <td>{{ $loop->iteration }}</td>
-                                    <td>
-                                        <span class="badge badge-primary">{{ $sale['id'] }}</span>
+                                    <td class="id-column">{{ $sale['id'] }}</td>
+                                    <td class="detail-id-column">
                                         @if($sale['item_count'] > 1)
                                             <span class="badge badge-info">{{ $sale['item_count'] }} items</span>
+                                            <small class="text-muted d-block">Multi-produk</small>
+                                        @else
+                                            <span class="badge badge-success">Single</span>
+                                            <small class="text-muted d-block">1 produk</small>
                                         @endif
                                     </td>
                                     <td>{{ \Carbon\Carbon::parse($sale['sale_date'])->format('d/m/Y H:i') }}</td>
@@ -144,9 +154,26 @@
                                                 <i class="fas fa-trash"></i>
                                             </button>
                                             @endif
-                                            <a href="{{ route('sales.struk', $sale['id']) }}" class="btn btn-info btn-sm" target="_blank" title="Cetak Struk">
-                                                <i class="fas fa-print"></i>
-                                            </a>
+                                            <div class="btn-group" role="group">
+                                                <button type="button" class="btn btn-info btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Cetak Struk">
+                                                    <i class="fas fa-print"></i>
+                                                </button>
+                                                <div class="dropdown-menu dropdown-menu-right">
+                                                    <a class="dropdown-item" href="{{ route('sales.struk.select', $sale['id']) }}">
+                                                        <i class="fas fa-cog fa-sm"></i> Pilih Ukuran Struk
+                                                    </a>
+                                                    <div class="dropdown-divider"></div>
+                                                    <a class="dropdown-item" href="{{ route('sales.struk', $sale['id']) }}" target="_blank">
+                                                        <i class="fas fa-print fa-sm"></i> Struk A6 (Default)
+                                                    </a>
+                                                    <a class="dropdown-item" href="{{ route('sales.struk.thermal', $sale['id']) }}" target="_blank">
+                                                        <i class="fas fa-receipt fa-sm"></i> Struk Thermal Coreless (40mm)
+                                                    </a>
+                                                    <a class="dropdown-item" href="{{ route('sales.struk.a4', $sale['id']) }}" target="_blank">
+                                                        <i class="fas fa-file-alt fa-sm"></i> Struk A4 (Formal)
+                                                    </a>
+                                                </div>
+                                            </div>
                                         </div>
                                     </td>
                                 </tr>
@@ -172,6 +199,44 @@
 
 @push('styles')
 <link href="{{ asset('vendor/datatables/dataTables.bootstrap4.min.css') }}" rel="stylesheet">
+<style>
+    .id-column {
+        font-weight: bold;
+        color: #007bff;
+        text-align: center;
+        background-color: #f8f9fa;
+    }
+    .id-column:hover {
+        background-color: #e9ecef;
+    }
+    .detail-id-column {
+        text-align: center;
+    }
+    .badge {
+        font-size: 0.75em;
+    }
+    .fa-question-circle {
+        font-size: 0.8em;
+        cursor: help;
+    }
+    .table th {
+        position: relative;
+    }
+    .table th[title]:hover::after {
+        content: attr(title);
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #333;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 4px;
+        font-size: 12px;
+        white-space: nowrap;
+        z-index: 1000;
+    }
+</style>
 @endpush
 
 @push('scripts')
@@ -181,7 +246,34 @@
     $(document).ready(function() {
         $('#dataTable').DataTable({
             "pageLength": 25,
-            "order": [[2, "desc"]] // Urutkan berdasarkan tanggal (kolom 2) descending
+            "order": [[2, "desc"]], // Urutkan berdasarkan tanggal (kolom 2) descending
+            "columnDefs": [
+                {
+                    "targets": 0, // Kolom ID
+                    "orderable": false, // Tidak bisa diurutkan
+                    "searchable": false // Tidak bisa dicari
+                },
+                {
+                    "targets": 1, // Kolom Detail ID
+                    "orderable": false, // Tidak bisa diurutkan
+                    "searchable": false // Tidak bisa dicari
+                }
+            ],
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Indonesian.json"
+            },
+            "drawCallback": function(settings) {
+                // Pastikan ID tetap konsisten setelah filtering
+                var api = this.api();
+                var rows = api.rows({page: 'current'}).nodes();
+                var start = api.page.info().start;
+
+                // ID tetap menggunakan data asli dari database
+                $(rows).each(function(index) {
+                    var data = api.row(this).data();
+                    $(this).find('td:first').text(data[0]); // ID dari database
+                });
+            }
         });
     });
 

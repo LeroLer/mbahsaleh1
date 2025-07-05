@@ -140,8 +140,14 @@ class SaleController extends Controller
                 ->with('error', 'Akses ditolak. Hanya admin yang dapat mengedit penjualan.');
         }
 
+        // Ambil semua sale dengan tanggal dan customer yang sama
+        $allSales = Sale::with('product')
+            ->where('sale_date', $sale->sale_date)
+            ->where('customer_name', $sale->customer_name)
+            ->get();
+
         $products = Product::all();
-        return view('sales.edit', compact('sale', 'products'));
+        return view('sales.edit', compact('sale', 'allSales', 'products'));
     }
 
     public function update(Request $request, Sale $sale)
@@ -153,25 +159,52 @@ class SaleController extends Controller
         }
 
         $request->validate([
-            'product_id' => 'required|exists:products,id',
-            'quantity' => 'required|numeric|min:0.01',
+            'sales' => 'required|array|min:1',
+            'sales.*.id' => 'required|exists:sales,id',
+            'sales.*.product_id' => 'required|exists:products,id',
+            'sales.*.quantity' => 'required|numeric|min:0.01',
             'sale_date' => 'required|date',
             'customer_name' => 'nullable|string|max:255',
+            'new_products' => 'nullable|array',
+            'new_products.*.product_id' => 'nullable|exists:products,id',
+            'new_products.*.quantity' => 'nullable|numeric|min:0.01',
         ]);
 
         try {
             DB::beginTransaction();
 
-            $product = Product::findOrFail($request->product_id);
-            $total_price = $product->price * $request->quantity;
+            // Update existing sales
+            foreach ($request->sales as $saleData) {
+                $existingSale = Sale::findOrFail($saleData['id']);
+                $product = Product::findOrFail($saleData['product_id']);
+                $total_price = $product->price * $saleData['quantity'];
 
-            $sale->update([
-                'product_id' => $request->product_id,
-                'quantity' => $request->quantity,
-                'total_price' => $total_price,
-                'sale_date' => $request->sale_date,
-                'customer_name' => $request->customer_name,
-            ]);
+                $existingSale->update([
+                    'product_id' => $saleData['product_id'],
+                    'quantity' => $saleData['quantity'],
+                    'total_price' => $total_price,
+                    'sale_date' => $request->sale_date,
+                    'customer_name' => $request->customer_name,
+                ]);
+            }
+
+            // Add new products if any
+            if ($request->has('new_products')) {
+                foreach ($request->new_products as $newProduct) {
+                    if (!empty($newProduct['product_id']) && !empty($newProduct['quantity'])) {
+                        $product = Product::findOrFail($newProduct['product_id']);
+                        $total_price = $product->price * $newProduct['quantity'];
+
+                        Sale::create([
+                            'product_id' => $newProduct['product_id'],
+                            'quantity' => $newProduct['quantity'],
+                            'total_price' => $total_price,
+                            'sale_date' => $request->sale_date,
+                            'customer_name' => $request->customer_name,
+                        ]);
+                    }
+                }
+            }
 
             DB::commit();
 
@@ -202,7 +235,7 @@ class SaleController extends Controller
         }
     }
 
-    public function printStruk($id)
+    public function printStruk($id, $size = 'a6')
     {
         // Ambil sale pertama untuk mendapatkan informasi transaksi
         $firstSale = Sale::with('product')->findOrFail($id);
@@ -217,8 +250,54 @@ class SaleController extends Controller
         $totalAmount = $allSales->sum('total_price');
         $totalQuantity = $allSales->sum('quantity');
 
-        return view('sales.struk', [
+        $data = [
             'sales' => $allSales,
+            'sale_date' => $firstSale->sale_date,
+            'customer_name' => $firstSale->customer_name,
+            'total_amount' => $totalAmount,
+            'total_quantity' => $totalQuantity,
+            'item_count' => $allSales->count()
+        ];
+
+        // Pilih template berdasarkan ukuran
+        switch ($size) {
+            case 'thermal':
+                return view('sales.struk_thermal', $data);
+            case 'a4':
+                return view('sales.struk_a4', $data);
+            case 'a6':
+            default:
+                return view('sales.struk', $data);
+        }
+    }
+
+    public function printStrukThermal($id)
+    {
+        return $this->printStruk($id, 'thermal');
+    }
+
+    public function printStrukA4($id)
+    {
+        return $this->printStruk($id, 'a4');
+    }
+
+    public function strukSelector($id)
+    {
+        // Ambil sale pertama untuk mendapatkan informasi transaksi
+        $firstSale = Sale::with('product')->findOrFail($id);
+
+        // Ambil semua sale dengan tanggal dan customer yang sama
+        $allSales = Sale::with('product')
+            ->where('sale_date', $firstSale->sale_date)
+            ->where('customer_name', $firstSale->customer_name)
+            ->get();
+
+        // Hitung total
+        $totalAmount = $allSales->sum('total_price');
+        $totalQuantity = $allSales->sum('quantity');
+
+        return view('sales.struk_selector', [
+            'sale_id' => $id,
             'sale_date' => $firstSale->sale_date,
             'customer_name' => $firstSale->customer_name,
             'total_amount' => $totalAmount,
@@ -227,10 +306,32 @@ class SaleController extends Controller
         ]);
     }
 
-    public function exportPage()
+    public function exportPage(Request $request)
     {
-        // Tampilkan halaman/form export laporan penjualan
-        return view('sales.export');
+        $sales = collect();
+        $start_date = null;
+        $end_date = null;
+        $total_amount = 0;
+        $total_quantity = 0;
+        $total_transactions = 0;
+
+        // Jika ada parameter tanggal, ambil data sesuai filter
+        if ($request->has('start_date') && $request->has('end_date')) {
+            $start_date = $request->start_date;
+            $end_date = $request->end_date;
+
+            $sales = Sale::with('product')
+                ->whereDate('sale_date', '>=', $start_date)
+                ->whereDate('sale_date', '<=', $end_date)
+                ->orderBy('sale_date', 'desc')
+                ->get();
+
+            $total_amount = $sales->sum('total_price');
+            $total_quantity = $sales->sum('quantity');
+            $total_transactions = $sales->count();
+        }
+
+        return view('sales.export', compact('sales', 'start_date', 'end_date', 'total_amount', 'total_quantity', 'total_transactions'));
     }
 
     public function export(Request $request)
@@ -244,6 +345,7 @@ class SaleController extends Controller
         $sales = \App\Models\Sale::with('product')
             ->whereDate('sale_date', '>=', $request->start_date)
             ->whereDate('sale_date', '<=', $request->end_date)
+            ->orderBy('sale_date', 'desc')
             ->get();
 
         $data = $sales->map(function($sale) {
@@ -251,22 +353,174 @@ class SaleController extends Controller
                 'Tanggal' => $sale->sale_date,
                 'Produk' => $sale->product ? $sale->product->name : '-',
                 'Jumlah' => $sale->quantity,
+                'Harga Satuan' => $sale->product ? $sale->product->price : 0,
                 'Total Harga' => $sale->total_price,
                 'Customer' => $sale->customer_name,
             ];
         });
 
         if ($request->format === 'excel') {
-            $export = new class($data) implements \Maatwebsite\Excel\Concerns\FromCollection, \Maatwebsite\Excel\Concerns\WithHeadings {
+            $export = new class($data, $request->start_date, $request->end_date) implements
+                \Maatwebsite\Excel\Concerns\FromCollection,
+                \Maatwebsite\Excel\Concerns\WithHeadings,
+                \Maatwebsite\Excel\Concerns\WithStyles,
+                \Maatwebsite\Excel\Concerns\WithEvents,
+                \Maatwebsite\Excel\Concerns\WithTitle,
+                \Maatwebsite\Excel\Concerns\WithMultipleSheets {
+
                 protected $data;
-                public function __construct($data) { $this->data = $data; }
-                public function collection() { return collect($this->data); }
-                public function headings(): array { return ['Tanggal', 'Produk', 'Jumlah', 'Total Harga', 'Customer']; }
+                protected $start_date;
+                protected $end_date;
+
+                public function __construct($data, $start_date, $end_date) {
+                    $this->data = $data;
+                    $this->start_date = $start_date;
+                    $this->end_date = $end_date;
+                }
+
+                public function collection() {
+                    return collect($this->data);
+                }
+
+                                public function headings(): array {
+                    return ['Tanggal', 'Produk', 'Kuantitas (kg)', 'Harga Satuan', 'Total Harga', 'Customer'];
+                }
+
+                public function styles(\PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet)
+                {
+                    return [
+                        // Header styling
+                        1 => [
+                            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+                            'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'color' => ['rgb' => '007BFF']],
+                            'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER],
+                        ],
+                        // Data rows
+                        'B' => ['alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT]],
+                        'C' => ['alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT]],
+                        'D' => ['alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT], 'font' => ['bold' => true]],
+                    ];
+                }
+
+                public function registerEvents(): array
+                {
+                    return [
+                        \Maatwebsite\Excel\Events\BeforeSheet::class => function(\Maatwebsite\Excel\Events\BeforeSheet $event) {
+                            $sheet = $event->sheet;
+
+                                                        // Add company header
+                            $sheet->setCellValue('A1', 'MBah Saleh - Pemancingan Galatama');
+                            $sheet->mergeCells('A1:F1');
+                            $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(16);
+                            $sheet->getStyle('A1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+
+                            // Add report title
+                            $sheet->setCellValue('A2', 'LAPORAN PENJUALAN');
+                            $sheet->mergeCells('A2:F2');
+                            $sheet->getStyle('A2')->getFont()->setBold(true)->setSize(14);
+                            $sheet->getStyle('A2')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+
+                            // Add period
+                            $sheet->setCellValue('A3', 'Periode: ' . \Carbon\Carbon::parse($this->start_date)->format('d/m/Y') . ' s/d ' . \Carbon\Carbon::parse($this->end_date)->format('d/m/Y'));
+                            $sheet->mergeCells('A3:F3');
+                            $sheet->getStyle('A3')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+
+                            // Add summary
+                            $sheet->setCellValue('A4', 'Total Transaksi: ' . $this->data->count());
+                            $sheet->setCellValue('B4', 'Total Kuantitas: ' . number_format($this->data->sum('Jumlah'), 2) . ' kg');
+                            $sheet->setCellValue('C4', 'Total Pendapatan: Rp ' . number_format($this->data->sum('Total Harga'), 0, ',', '.'));
+                            $sheet->mergeCells('C4:F4');
+
+                            // Add empty row
+                            $sheet->setCellValue('A5', '');
+
+                            // Move data down by 5 rows
+                            $sheet->insertNewRowBefore(6, 5);
+                        },
+                    ];
+                }
+
+                public function title(): string
+                {
+                    return 'Detail Transaksi';
+                }
+
+                public function sheets(): array
+                {
+                    return [
+                        'Detail Transaksi' => $this,
+                        'Ringkasan Produk' => new class($this->data) implements
+                            \Maatwebsite\Excel\Concerns\FromCollection,
+                            \Maatwebsite\Excel\Concerns\WithHeadings,
+                            \Maatwebsite\Excel\Concerns\WithTitle {
+
+                            protected $data;
+
+                            public function __construct($data) {
+                                $this->data = $data;
+                            }
+
+                            public function collection() {
+                                $productSummary = $this->data->groupBy('Produk')->map(function($group) {
+                                    return [
+                                        'Produk' => $group->first()['Produk'],
+                                        'Total Kuantitas' => $group->sum('Jumlah'),
+                                        'Total Pendapatan' => $group->sum('Total Harga'),
+                                        'Persentase' => number_format(($group->sum('Total Harga') / $this->data->sum('Total Harga')) * 100, 1) . '%'
+                                    ];
+                                });
+                                return $productSummary->values();
+                            }
+
+                            public function headings(): array {
+                                return ['Produk', 'Total Kuantitas (kg)', 'Total Pendapatan', 'Persentase'];
+                            }
+
+                            public function title(): string
+                            {
+                                return 'Ringkasan Produk';
+                            }
+                        },
+                        'Ringkasan Customer' => new class($this->data) implements
+                            \Maatwebsite\Excel\Concerns\FromCollection,
+                            \Maatwebsite\Excel\Concerns\WithHeadings,
+                            \Maatwebsite\Excel\Concerns\WithTitle {
+
+                            protected $data;
+
+                            public function __construct($data) {
+                                $this->data = $data;
+                            }
+
+                            public function collection() {
+                                $customerSummary = $this->data->groupBy('Customer')->map(function($group) {
+                                    return [
+                                        'Customer' => $group->first()['Customer'] ?: 'Umum',
+                                        'Total Transaksi' => $group->count(),
+                                        'Total Kuantitas' => $group->sum('Jumlah'),
+                                        'Total Pendapatan' => $group->sum('Total Harga')
+                                    ];
+                                });
+                                return $customerSummary->values();
+                            }
+
+                            public function headings(): array {
+                                return ['Customer', 'Total Transaksi', 'Total Kuantitas (kg)', 'Total Pendapatan'];
+                            }
+
+                            public function title(): string
+                            {
+                                return 'Ringkasan Customer';
+                            }
+                        }
+                    ];
+                }
             };
-            return Excel::download($export, 'laporan-penjualan.xlsx');
+
+            return Excel::download($export, 'laporan-penjualan-' . $request->start_date . '-sampai-' . $request->end_date . '.xlsx');
         } else {
             $pdf = Pdf::loadView('sales.export_pdf', ['data' => $data, 'start_date' => $request->start_date, 'end_date' => $request->end_date]);
-            return $pdf->download('laporan-penjualan.pdf');
+            return $pdf->download('laporan-penjualan-' . $request->start_date . '-sampai-' . $request->end_date . '.pdf');
         }
     }
 

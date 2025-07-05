@@ -38,6 +38,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/sales/create', [SaleController::class, 'create'])->name('sales.create');
     Route::post('/sales', [SaleController::class, 'store'])->name('sales.store');
     Route::get('sales/{id}/struk', [SaleController::class, 'printStruk'])->name('sales.struk');
+    Route::get('sales/{id}/struk/thermal', [SaleController::class, 'printStrukThermal'])->name('sales.struk.thermal');
+    Route::get('sales/{id}/struk/a4', [SaleController::class, 'printStrukA4'])->name('sales.struk.a4');
+    Route::get('sales/{id}/struk/select', [SaleController::class, 'strukSelector'])->name('sales.struk.select');
 
     // Sales routes yang memerlukan admin
     Route::middleware('admin')->group(function () {

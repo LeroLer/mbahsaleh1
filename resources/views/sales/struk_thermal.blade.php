@@ -3,46 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Struk Penjualan</title>
+    <title>Struk Penjualan - Thermal</title>
     <style>
         body {
             font-family: 'Courier New', monospace;
             margin: 0;
-            padding: 10px;
+            padding: 5px;
             background-color: #f8f9fa;
         }
         .struk {
-            width: 105mm;
-            height: 148mm;
+            width: 40mm;
+            min-height: 25mm;
             margin: 0 auto;
             background: white;
-            padding: 10mm;
-            border-radius: 4px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 1.5mm;
+            border-radius: 1px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             box-sizing: border-box;
         }
         .header {
             text-align: center;
-            border-bottom: 2px dashed #ddd;
-            padding-bottom: 10px;
-            margin-bottom: 10px;
+            border-bottom: 1px dashed #ddd;
+            padding-bottom: 4px;
+            margin-bottom: 4px;
         }
         .title {
-            font-size: 16px;
+            font-size: 9px;
             font-weight: bold;
             margin: 0;
             color: #333;
         }
         .subtitle {
-            font-size: 10px;
+            font-size: 6px;
             color: #666;
-            margin: 3px 0;
+            margin: 1px 0;
         }
         .info-row {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 6px;
-            font-size: 10px;
+            margin-bottom: 2px;
+            font-size: 6px;
         }
         .info-label {
             font-weight: bold;
@@ -53,58 +53,58 @@
         }
         .divider {
             border-top: 1px dashed #ddd;
-            margin: 10px 0;
+            margin: 3px 0;
         }
         .product-item {
-            margin-bottom: 8px;
-            padding-bottom: 6px;
+            margin-bottom: 3px;
+            padding-bottom: 2px;
             border-bottom: 1px dotted #eee;
         }
         .product-name {
             font-weight: bold;
-            font-size: 11px;
+            font-size: 7px;
             color: #333;
-            margin-bottom: 2px;
+            margin-bottom: 1px;
         }
         .product-details {
             display: flex;
             justify-content: space-between;
-            font-size: 9px;
+            font-size: 5px;
             color: #666;
         }
         .total-section {
-            border-top: 2px dashed #ddd;
-            padding-top: 10px;
-            margin-top: 10px;
+            border-top: 1px dashed #ddd;
+            padding-top: 3px;
+            margin-top: 3px;
         }
         .total-row {
             display: flex;
             justify-content: space-between;
-            font-size: 12px;
-            margin-bottom: 4px;
+            font-size: 7px;
+            margin-bottom: 2px;
         }
         .grand-total {
-            font-size: 14px;
+            font-size: 8px;
             font-weight: bold;
             color: #333;
         }
         .footer {
             text-align: center;
-            margin-top: 15px;
-            font-size: 8px;
+            margin-top: 4px;
+            font-size: 4px;
             color: #999;
         }
         .actions {
             text-align: center;
-            margin-top: 20px;
+            margin-top: 15px;
         }
         .btn {
-            padding: 8px 16px;
-            margin: 0 5px;
+            padding: 6px 12px;
+            margin: 0 3px;
             border: none;
-            border-radius: 4px;
+            border-radius: 3px;
             cursor: pointer;
-            font-size: 12px;
+            font-size: 10px;
             text-decoration: none;
             display: inline-block;
         }
@@ -129,7 +129,7 @@
                 border-radius: 0;
             }
             @page {
-                size: A6;
+                size: 40mm auto;
                 margin: 0;
             }
         }
@@ -141,7 +141,6 @@
             <h1 class="title">MBah Saleh</h1>
             <p class="subtitle">Pemancingan Galatama</p>
             <p class="subtitle">Jl. Raya Ikan No. 123</p>
-            <p class="subtitle">Telp: 0812-3456-7890</p>
         </div>
 
         <div class="info-row">
@@ -184,7 +183,6 @@
 
         <div class="footer">
             <p>Terima kasih telah berbelanja</p>
-            <p>Barang yang sudah dibeli tidak dapat dikembalikan</p>
             <p>{{ now()->format('d/m/Y H:i:s') }}</p>
         </div>
     </div>
