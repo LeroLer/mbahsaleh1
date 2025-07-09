@@ -16,44 +16,67 @@
 
     <!-- Custom styles for this template-->
     <link href="https://cdn.jsdelivr.net/npm/startbootstrap-sb-admin-2@4.1.3/css/sb-admin-2.min.css" rel="stylesheet">
+
+    <style>
+        .card {
+            border-radius: 15px;
+            border: none;
+        }
+        .form-control:focus {
+            border-color: #4e73df;
+            box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+        }
+        .btn-primary {
+            background: linear-gradient(45deg, #4e73df, #224abe);
+            border: none;
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .bg-gradient-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+    </style>
 </head>
 
 <body class="bg-gradient-primary">
     <div class="container">
         <!-- Outer Row -->
         <div class="row justify-content-center">
-            <div class="col-xl-10 col-lg-12 col-md-9">
+            <div class="col-xl-6 col-lg-8 col-md-10 col-sm-12">
                 <div class="card o-hidden border-0 shadow-lg my-5">
                     <div class="card-body p-0">
                         <!-- Nested Row within Card Body -->
                         <div class="row">
-                            <div class="col-lg-6 d-none d-lg-block bg-login-image"></div>
-                            <div class="col-lg-6">
-                                <div class="p-5">
+                            <div class="col-lg-12">
+                                <div class="p-4">
                                     <div class="text-center">
-                                        <h1 class="h4 text-gray-900 mb-4">
-                                            <i class="fas fa-fish text-primary"></i> Pemancingan
-                                        </h1>
+                                        <!-- Logo -->
+                                        <div class="mb-3">
+                                            <img src="{{ asset('images/pemancingan_mbah_remove.png') }}" alt="Logo Pemancingan" class="img-fluid" style="max-width: 80px; height: auto;" onerror="this.src='{{ asset('images/logo.svg') }}'; this.onerror=null;">
+                                        </div>
                                     </div>
                                     <form class="user" method="POST" action="{{ route('login') }}">
                                         @csrf
-                                        <div class="form-group">
-                                            <input type="email" class="form-control form-control-user @error('email') is-invalid @enderror"
+                                        <div class="form-group mb-3">
+                                            <input type="email" class="form-control @error('email') is-invalid @enderror"
                                                 id="email" name="email" value="{{ old('email') }}"
-                                                placeholder="Masukkan Email..." required autofocus>
+                                                placeholder="Email" required autofocus style="border-radius: 20px; padding: 10px 15px;">
                                             @error('email')
                                                 <div class="invalid-feedback">{{ $message }}</div>
                                             @enderror
                                         </div>
-                                        <div class="form-group">
-                                            <input type="password" class="form-control form-control-user @error('password') is-invalid @enderror"
-                                                id="password" name="password" placeholder="Password" required>
+                                        <div class="form-group mb-4">
+                                            <input type="password" class="form-control @error('password') is-invalid @enderror"
+                                                id="password" name="password" placeholder="Password" required style="border-radius: 20px; padding: 10px 15px;">
                                             @error('password')
                                                 <div class="invalid-feedback">{{ $message }}</div>
                                             @enderror
                                         </div>
-                                        <button type="submit" class="btn btn-primary btn-user btn-block">
-                                            Login
+                                        <button type="submit" class="btn btn-primary btn-block" style="border-radius: 20px; padding: 10px;">
+                                            <i class="fas fa-sign-in-alt mr-2"></i>Login
                                         </button>
                                     </form>
                                 </div>
@@ -63,6 +86,11 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- Copyright -->
+    <div class="text-center text-white mt-4">
+        <small>Copyright &copy; irsalnotical & hajeer elKirisaki 2025</small>
     </div>
 
     <!-- Bootstrap core JavaScript-->
