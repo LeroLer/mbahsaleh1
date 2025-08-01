@@ -15,6 +15,7 @@ class Sale extends Model
         'total_price',
         'sale_date',
         'customer_name',
+        'scale_photo',
     ];
 
     protected $casts = [

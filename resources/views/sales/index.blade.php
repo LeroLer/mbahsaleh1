@@ -83,15 +83,46 @@
                                     <td>{{ \Carbon\Carbon::parse($sale['sale_date'])->format('d/m/Y H:i') }}</td>
                                     <td>
                                         @if($sale['item_count'] == 1)
-                                            {{ $sale['products'][0]['name'] }}
+                                            <button type="button" class="btn btn-sm btn-outline-info" data-toggle="modal" data-target="#productsModal{{ $sale['id'] }}">
+                                                Detail Produk
+                                            </button>
+                                            <!-- Modal untuk single produk -->
+                                            <div class="modal fade" id="productsModal{{ $sale['id'] }}" tabindex="-1" role="dialog">
+                                                <div class="modal-dialog" role="document">
+                                                    <div class="modal-content">
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title">Detail Produk - ID: {{ $sale['id'] }}</h5>
+                                                            <button type="button" class="close" data-dismiss="modal">
+                                                                <span>&times;</span>
+                                                            </button>
+                                                        </div>
+                                                        <div class="modal-body">
+                                                            <ul class="list-group">
+                                                                <li class="list-group-item"><strong>Nama Produk:</strong> {{ $sale['products'][0]['name'] }}</li>
+                                                                <li class="list-group-item"><strong>Kuantitas:</strong> {{ $sale['products'][0]['quantity'] }} kg</li>
+                                                                <li class="list-group-item"><strong>Harga/kg:</strong> Rp {{ number_format($sale['products'][0]['price_per_kg'], 0, ',', '.') }}</li>
+                                                                <li class="list-group-item"><strong>Total Harga:</strong> Rp {{ number_format($sale['products'][0]['total_price'], 0, ',', '.') }}</li>
+                                                                @if($sale['products'][0]['scale_photo'])
+                                                                    <li class="list-group-item">
+                                                                        <strong>Foto Timbangan:</strong><br>
+                                                                        <img src="{{ asset('storage/' . $sale['products'][0]['scale_photo']) }}" alt="Foto Timbangan" style="max-width: 180px;" class="img-thumbnail mt-2">
+                                                                    </li>
+                                                                @endif
+                                                            </ul>
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         @else
                                             <button type="button" class="btn btn-sm btn-outline-info"
                                                     data-toggle="modal"
                                                     data-target="#productsModal{{ $sale['id'] }}">
                                                 {{ $sale['item_count'] }} Produk
                                             </button>
-
-                                            <!-- Modal untuk menampilkan detail produk -->
+                                            <!-- Modal untuk multi produk -->
                                             <div class="modal fade" id="productsModal{{ $sale['id'] }}" tabindex="-1" role="dialog">
                                                 <div class="modal-dialog modal-lg" role="document">
                                                     <div class="modal-content">
@@ -110,6 +141,7 @@
                                                                             <th>Kuantitas</th>
                                                                             <th>Harga/kg</th>
                                                                             <th>Total</th>
+                                                                            <th>Foto Timbangan</th>
                                                                         </tr>
                                                                     </thead>
                                                                     <tbody>
@@ -119,12 +151,19 @@
                                                                                 <td>{{ $product['quantity'] }} kg</td>
                                                                                 <td>Rp {{ number_format($product['price_per_kg'], 0, ',', '.') }}</td>
                                                                                 <td>Rp {{ number_format($product['total_price'], 0, ',', '.') }}</td>
+                                                                                <td>
+                                                                                    @if($product['scale_photo'])
+                                                                                        <img src="{{ asset('storage/' . $product['scale_photo']) }}" alt="Foto Timbangan" style="max-width: 100px;" class="img-thumbnail">
+                                                                                    @else
+                                                                                        <span class="text-muted">-</span>
+                                                                                    @endif
+                                                                                </td>
                                                                             </tr>
                                                                         @endforeach
                                                                     </tbody>
                                                                     <tfoot>
                                                                         <tr class="table-info">
-                                                                            <td colspan="3" class="text-right font-weight-bold">Total:</td>
+                                                                            <td colspan="4" class="text-right font-weight-bold">Total:</td>
                                                                             <td class="font-weight-bold">Rp {{ number_format($sale['total_amount'], 0, ',', '.') }}</td>
                                                                         </tr>
                                                                     </tfoot>

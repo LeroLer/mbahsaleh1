@@ -21,7 +21,7 @@
             </div>
             <!-- Card Body -->
             <div class="card-body">
-                <form action="{{ route('sales.preview') }}" method="POST" id="salesForm">
+                <form action="{{ route('sales.store') }}" method="POST" id="salesForm" enctype="multipart/form-data">
                     @csrf
 
                     <!-- Dynamic Product Rows -->
@@ -61,6 +61,12 @@
                                 </div>
                                 <div class="col-md-2">
                                     <div class="form-group">
+                                        <label>Foto Timbangan</label>
+                                        <input type="file" class="form-control product-scale-photo" name="products[0][scale_photo]" accept="image/*">
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="form-group">
                                         <label>&nbsp;</label>
                                         <button type="button" class="btn btn-danger btn-block" onclick="removeProductRow(this)" style="display: none;">
                                             <i class="fas fa-trash"></i>
@@ -85,6 +91,9 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Area Preview Produk dan Foto -->
+                    <div id="previewArea" class="mt-4"></div>
 
                     <hr>
 
@@ -111,8 +120,8 @@
                             <i class="fas fa-arrow-left"></i> Kembali
                         </a>
                         <div>
-                            <button type="submit" class="btn btn-info">
-                                <i class="fas fa-eye"></i> Preview
+                            <button type="submit" class="btn btn-primary" id="btnSimpan">
+                                <i class="fas fa-save"></i> Simpan
                             </button>
                         </div>
                     </div>
@@ -134,6 +143,15 @@
         $(document).on('change keyup', '.product-select, .product-quantity', function() {
             calculateRowTotal($(this).closest('.product-row'));
             calculateGrandTotal();
+        });
+
+        // Konfirmasi sebelum submit
+        $('#btnSimpan').on('click', function(e) {
+            e.preventDefault();
+            if (confirm('Pastikan data penjualan dan foto timbangan sudah benar sebelum menyimpan! Lanjutkan simpan?')) {
+                $('#salesForm').off('submit'); // pastikan tidak double binding
+                $('#salesForm').submit();
+            }
         });
     });
 
@@ -170,6 +188,12 @@
                                 </div>
                                 <input type="text" class="form-control product-total" readonly>
                             </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label>Foto Timbangan</label>
+                            <input type="file" class="form-control product-scale-photo" name="products[${rowCounter}][scale_photo]" accept="image/*">
                         </div>
                     </div>
                     <div class="col-md-2">
@@ -224,5 +248,40 @@
         $('#salesForm').attr('action', '{{ route("sales.store") }}');
         $('#salesForm').submit();
     }
+
+    function updatePreview() {
+        const previewArea = document.getElementById('previewArea');
+        previewArea.innerHTML = '';
+        $('.product-row').each(function(idx, row) {
+            const name = $(row).find('.product-select option:selected').text();
+            const qty = $(row).find('.product-quantity').val();
+            const photoInput = $(row).find('.product-scale-photo')[0];
+            const total = $(row).find('.product-total').val();
+            const previewDiv = document.createElement('div');
+            previewDiv.className = 'mb-3';
+            previewDiv.innerHTML = `<strong>${name}</strong> - ${qty || 0} kg - Rp ${total || 0}<br>`;
+            if (photoInput && photoInput.files && photoInput.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.style.maxWidth = '120px';
+                    img.className = 'img-thumbnail mt-2';
+                    previewDiv.appendChild(img);
+                };
+                reader.readAsDataURL(photoInput.files[0]);
+            }
+            previewArea.appendChild(previewDiv);
+        });
+    }
+
+    $(document).on('change keyup', '.product-select, .product-quantity, .product-scale-photo', function() {
+        updatePreview();
+    });
+
+    // Panggil saat halaman pertama kali load
+    $(document).ready(function() {
+        updatePreview();
+    });
 </script>
 @endpush

@@ -7,6 +7,7 @@ use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 use Barryvdh\DomPDF\Facade\Pdf;
 
@@ -42,6 +43,7 @@ class SaleController extends Controller
                         'quantity' => $sale->quantity,
                         'price_per_kg' => $sale->product->price,
                         'total_price' => $sale->total_price,
+                        'scale_photo' => $sale->scale_photo,
                     ];
                 }),
                 'total_quantity' => $totalQuantity,
@@ -60,47 +62,13 @@ class SaleController extends Controller
         return view('sales.create', compact('products'));
     }
 
-    public function preview(Request $request)
-    {
-        $request->validate([
-            'products' => 'required|array|min:1',
-            'products.*.product_id' => 'required|exists:products,id',
-            'products.*.quantity' => 'required|numeric|min:0.01',
-            'sale_date' => 'required|date',
-            'customer_name' => 'nullable|string|max:255',
-        ]);
-
-        $products = [];
-        $grandTotal = 0;
-
-        foreach ($request->products as $productData) {
-            $product = Product::findOrFail($productData['product_id']);
-            $total = $product->price * $productData['quantity'];
-            $grandTotal += $total;
-
-            $products[] = [
-                'id' => $product->id,
-                'name' => $product->name,
-                'price' => $product->price,
-                'quantity' => $productData['quantity'],
-                'total' => $total,
-            ];
-        }
-
-        return view('sales.preview', [
-            'products' => $products,
-            'grandTotal' => $grandTotal,
-            'sale_date' => $request->sale_date,
-            'customer_name' => $request->customer_name,
-        ]);
-    }
-
     public function store(Request $request)
     {
         $request->validate([
             'products' => 'required|array|min:1',
             'products.*.product_id' => 'required|exists:products,id',
             'products.*.quantity' => 'required|numeric|min:0.01',
+            'products.*.scale_photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
             'sale_date' => 'required|date',
             'customer_name' => 'nullable|string|max:255',
         ]);
@@ -108,9 +76,14 @@ class SaleController extends Controller
         try {
             DB::beginTransaction();
 
-            foreach ($request->products as $productData) {
+            foreach ($request->products as $index => $productData) {
                 $product = Product::findOrFail($productData['product_id']);
                 $total_price = $product->price * $productData['quantity'];
+
+                $scalePhotoPath = null;
+                if ($request->hasFile("products.$index.scale_photo")) {
+                    $scalePhotoPath = $request->file("products.$index.scale_photo")->store('sales/scale_photos', 'public');
+                }
 
                 Sale::create([
                     'product_id' => $productData['product_id'],
@@ -118,6 +91,7 @@ class SaleController extends Controller
                     'total_price' => $total_price,
                     'sale_date' => $request->sale_date,
                     'customer_name' => $request->customer_name,
+                    'scale_photo' => $scalePhotoPath,
                 ]);
             }
 
@@ -163,21 +137,32 @@ class SaleController extends Controller
             'sales.*.id' => 'required|exists:sales,id',
             'sales.*.product_id' => 'required|exists:products,id',
             'sales.*.quantity' => 'required|numeric|min:0.01',
+            'sales.*.scale_photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
             'sale_date' => 'required|date',
             'customer_name' => 'nullable|string|max:255',
             'new_products' => 'nullable|array',
             'new_products.*.product_id' => 'nullable|exists:products,id',
             'new_products.*.quantity' => 'nullable|numeric|min:0.01',
+            'new_products.*.scale_photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
         try {
             DB::beginTransaction();
 
             // Update existing sales
-            foreach ($request->sales as $saleData) {
+            foreach ($request->sales as $index => $saleData) {
                 $existingSale = Sale::findOrFail($saleData['id']);
                 $product = Product::findOrFail($saleData['product_id']);
                 $total_price = $product->price * $saleData['quantity'];
+
+                $scalePhotoPath = $existingSale->scale_photo;
+                if ($request->hasFile("sales.$index.scale_photo")) {
+                    // Hapus foto lama jika ada
+                    if ($existingSale->scale_photo) {
+                        \Storage::disk('public')->delete($existingSale->scale_photo);
+                    }
+                    $scalePhotoPath = $request->file("sales.$index.scale_photo")->store('sales/scale_photos', 'public');
+                }
 
                 $existingSale->update([
                     'product_id' => $saleData['product_id'],
@@ -185,22 +170,27 @@ class SaleController extends Controller
                     'total_price' => $total_price,
                     'sale_date' => $request->sale_date,
                     'customer_name' => $request->customer_name,
+                    'scale_photo' => $scalePhotoPath,
                 ]);
             }
 
             // Add new products if any
             if ($request->has('new_products')) {
-                foreach ($request->new_products as $newProduct) {
+                foreach ($request->new_products as $index => $newProduct) {
                     if (!empty($newProduct['product_id']) && !empty($newProduct['quantity'])) {
                         $product = Product::findOrFail($newProduct['product_id']);
                         $total_price = $product->price * $newProduct['quantity'];
-
+                        $scalePhotoPath = null;
+                        if ($request->hasFile("new_products.$index.scale_photo")) {
+                            $scalePhotoPath = $request->file("new_products.$index.scale_photo")->store('sales/scale_photos', 'public');
+                        }
                         Sale::create([
                             'product_id' => $newProduct['product_id'],
                             'quantity' => $newProduct['quantity'],
                             'total_price' => $total_price,
                             'sale_date' => $request->sale_date,
                             'customer_name' => $request->customer_name,
+                            'scale_photo' => $scalePhotoPath,
                         ]);
                     }
                 }

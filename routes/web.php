@@ -33,7 +33,6 @@ Route::middleware('auth')->group(function () {
     });
 
     // Sales routes
-    Route::post('/sales/preview', [SaleController::class, 'preview'])->name('sales.preview');
     Route::get('/sales', [SaleController::class, 'index'])->name('sales.index');
     Route::get('/sales/create', [SaleController::class, 'create'])->name('sales.create');
     Route::post('/sales', [SaleController::class, 'store'])->name('sales.store');
